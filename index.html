@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Parking - Sistem Monitoring Parkir Pintar</title>
+    
+    <!-- Google Fonts: Fredoka & Nunito untuk tampilan ceria & playful -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Tailwind CSS (via CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        tayo: {
+                            blue: '#0072CE',    /* Tayo Blue */
+                            red: '#E53935',     /* Gani Red */
+                            green: '#4CAF50',   /* Rogi Green */
+                            yellow: '#FBC02D',  /* Lani Yellow */
+                            sky: '#E3F2FD',
+                            darkBlue: '#0D47A1'
+                        }
+                    },
+                    fontFamily: {
+                        title: ['Fredoka', 'sans-serif'],
+                        body: ['Nunito', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        /* CSS Custom Styles & Animations */
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #F4F8FC;
+            background-image: radial-gradient(#0072CE 0.75px, transparent 0.75px), radial-gradient(#FBC02D 0.75px, #F4F8FC 0.75px);
+            background-size: 30px 30px;
+            background-position: 0 0, 15px 15px;
+        }
+
+        h1, h2, h3, .font-title {
+            font-family: 'Fredoka', sans-serif;
+        }
+
+        /* Card custom styling dengan border tebal playful */
+        .tayo-card {
+            background: white;
+            border-radius: 1.5rem;
+            border: 3px solid #E2E8F0;
+            box-shadow: 0 10px 25px -5px rgba(0, 114, 206, 0.1), 0 8px 10px -6px rgba(0, 114, 206, 0.1);
+            transition: all 0.3s ease;
+        }
+        .tayo-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px -5px rgba(0, 114, 206, 0.18);
+        }
+
+        /* Pulsing Dot animation untuk Mode Simulasi */
+        .pulse-dot {
+            box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.7);
+            animation: pulse 1.6s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(76, 175, 80, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(76, 175, 80, 0); }
+        }
+
+        /* Animasi Palang Parkir */
+        .gate-arm {
+            transform-origin: left center;
+            transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .gate-arm.open {
+            transform: rotate(-65deg);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #F1F5F9;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #93C5FD;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #0072CE;
+        }
+
+        /* Vehicle Slot Effects */
+        .slot-card {
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .slot-card:active {
+            transform: scale(0.95);
+        }
+    </style>
+</head>
+<body class="min-h-screen text-slate-800 pb-12">
+
+    <!-- HEADER / BANNER -->
+    <header class="bg-tayo-blue text-white pt-6 pb-12 px-4 shadow-lg relative overflow-hidden rounded-b-[2.5rem]">
+        <!-- Decorative Background Bus Elements -->
+        <div class="absolute -right-6 -bottom-6 opacity-15 pointer-events-none text-9xl">
+            <i class="fa-solid fa-bus"></i>
+        </div>
+        <div class="absolute -left-8 top-2 opacity-15 pointer-events-none text-8xl">
+            <i class="fa-solid fa-car-side"></i>
+        </div>
+
+        <div class="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4 relative z-10">
+            <!-- Brand Logo & Title -->
+            <div class="flex items-center gap-4 text-center md:text-left">
+                <div class="bg-tayo-yellow text-slate-900 w-16 h-16 rounded-2xl flex items-center justify-center text-3xl shadow-md border-4 border-white transform rotate-3">
+                    🚌
+                </div>
+                <div>
+                    <h1 class="text-3xl md:text-4xl font-bold tracking-wide flex items-center justify-center md:justify-start gap-2">
+                        Smart Parking <span class="text-tayo-yellow text-2xl">★</span>
+                    </h1>
+                    <p class="text-sky-100 font-semibold text-sm md:text-base opacity-90">
+                        Sistem Monitoring Parkir Pintar Teman Tayo
+                    </p>
+                </div>
+            </div>
+
+            <!-- Mode Simulasi Badge -->
+            <div class="bg-white/15 backdrop-blur-md px-5 py-2.5 rounded-full border-2 border-white/30 flex items-center gap-3 shadow-inner">
+                <span class="w-3.5 h-3.5 rounded-full bg-tayo-green pulse-dot inline-block"></span>
+                <span class="font-bold text-sm tracking-wide text-white">Mode Simulasi Aktif</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN CONTAINER -->
+    <main class="max-w-6xl mx-auto px-4 -mt-6 space-y-8">
+
+        <!-- SECTION ESP32 & HARDWARE STATUS (BARU) -->
+        <section class="tayo-card p-5 bg-white border-4 border-tayo-blue/30 shadow-md">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-4 border-b border-slate-100">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 rounded-xl bg-tayo-blue text-white flex items-center justify-center text-2xl font-bold shadow-sm">
+                        <i class="fa-solid fa-microchip"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2">
+                            ESP32 Microcontroller Dashboard
+                        </h2>
+                        <p class="text-xs text-slate-500 font-semibold">Simulasi Data Hardware Real-Time (HTTP / WebSocket Endpoint)</p>
+                    </div>
+                </div>
+
+                <!-- Status ESP32 Badge -->
+                <div class="flex flex-wrap items-center gap-2">
+                    <span class="bg-emerald-100 text-emerald-700 font-bold text-xs px-3 py-1.5 rounded-full border border-emerald-300 flex items-center gap-1.5">
+                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 pulse-dot"></span> ESP32 ONLINE
+                    </span>
+                    <span class="bg-slate-100 text-slate-600 font-mono text-xs px-3 py-1.5 rounded-full border border-slate-200">
+                        IP: 192.168.1.50
+                    </span>
+                    <span class="bg-slate-100 text-slate-600 font-mono text-xs px-3 py-1.5 rounded-full border border-slate-200">
+                        RSSI: -58 dBm
+                    </span>
+                </div>
+            </div>
+
+            <!-- Panel Simulasi Sensor IR (Hardware Triggers) -->
+            <div class="mt-4">
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Simulasi Deteksi Sensor Infrared (IR):</p>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <!-- IR Sensor 1 Trigger -->
+                    <div class="bg-slate-50 p-3.5 rounded-2xl border border-slate-200 flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <span class="text-xl">📡</span>
+                            <div>
+                                <h4 class="font-bold text-sm text-slate-800">Sensor IR 1 (Slot A1)</h4>
+                                <span class="text-xs text-slate-400 font-mono">Pin GPIO 32</span>
+                            </div>
+                        </div>
+                        <button onclick="toggleIRSensor('A1')" class="bg-tayo-blue hover:bg-blue-600 active:scale-95 text-white font-bold text-xs py-2 px-3 rounded-xl transition shadow">
+                            Simulasi Trigger IR 1
+                        </button>
+                    </div>
+
+                    <!-- IR Sensor 2 Trigger -->
+                    <div class="bg-slate-50 p-3.5 rounded-2xl border border-slate-200 flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <span class="text-xl">📡</span>
+                            <div>
+                                <h4 class="font-bold text-sm text-slate-800">Sensor IR 2 (Slot A2)</h4>
+                                <span class="text-xs text-slate-400 font-mono">Pin GPIO 33</span>
+                            </div>
+                        </div>
+                        <button onclick="toggleIRSensor('A2')" class="bg-tayo-blue hover:bg-blue-600 active:scale-95 text-white font-bold text-xs py-2 px-3 rounded-xl transition shadow">
+                            Simulasi Trigger IR 2
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 1: STATISTIK PARKIR -->
+        <section class="grid grid-cols-1 md:grid-cols-3 gap-5">
+            <!-- Total Slot -->
+            <div class="tayo-card p-5 flex items-center gap-4 border-l-8 border-l-tayo-blue">
+                <div class="w-14 h-14 rounded-2xl bg-blue-100 text-tayo-blue flex items-center justify-center text-2xl font-bold shrink-0">
+                    <i class="fa-solid fa-square-parking"></i>
+                </div>
+                <div>
+                    <p class="text-sm font-bold text-slate-400 uppercase tracking-wider">Total Slot</p>
+                    <h3 id="stat-total" class="text-3xl font-extrabold text-slate-800">2</h3>
+                </div>
+            </div>
+
+            <!-- Slot Tersedia -->
+            <div class="tayo-card p-5 flex items-center gap-4 border-l-8 border-l-tayo-green">
+                <div class="w-14 h-14 rounded-2xl bg-green-100 text-tayo-green flex items-center justify-center text-2xl font-bold shrink-0">
+                    <i class="fa-solid fa-circle-check"></i>
+                </div>
+                <div>
+                    <p class="text-sm font-bold text-slate-400 uppercase tracking-wider">Slot Tersedia</p>
+                    <h3 id="stat-available" class="text-3xl font-extrabold text-tayo-green">0</h3>
+                </div>
+            </div>
+
+            <!-- Slot Terisi -->
+            <div class="tayo-card p-5 flex items-center gap-4 border-l-8 border-l-tayo-red">
+                <div class="w-14 h-14 rounded-2xl bg-red-100 text-tayo-red flex items-center justify-center text-2xl font-bold shrink-0">
+                    <i class="fa-solid fa-car-burst"></i>
+                </div>
+                <div>
+                    <p class="text-sm font-bold text-slate-400 uppercase tracking-wider">Slot Terisi</p>
+                    <h3 id="stat-occupied" class="text-3xl font-extrabold text-tayo-red">0</h3>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- SECTION 2: VISUALISASI SLOT PARKIR & KONTROL GERBANG -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <!-- LEFT COLUMN (2 Cols): VISUALISASI SLOT PARKIR (2 SLOT) -->
+            <div class="lg:col-span-2 space-y-4">
+                <div class="flex items-center justify-between px-2">
+                    <h2 class="text-2xl font-bold text-slate-800 flex items-center gap-2">
+                        <span>🚘</span> Status Slot Parkir IR (2 Slot)
+                    </h2>
+                    <span class="text-xs font-bold bg-tayo-yellow/30 text-slate-700 px-3 py-1 rounded-full border border-tayo-yellow">
+                        Sensor IR Direct Mirroring
+                    </span>
+                </div>
+
+                <!-- Parking Grid (2 Slots Only) -->
+                <div id="parking-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <!-- Dynamic slots generated by JavaScript -->
+                </div>
+            </div>
+
+            <!-- RIGHT COLUMN (1 Col): KONTROL GERBANG -->
+            <div class="space-y-4">
+                <h2 class="text-2xl font-bold text-slate-800 flex items-center gap-2 px-2">
+                    <span>🚧</span> Servo Gate ESP32
+                </h2>
+
+                <div class="space-y-5">
+                    <!-- Gate IN Card -->
+                    <div class="tayo-card p-5 border-t-4 border-t-tayo-blue">
+                        <div class="flex justify-between items-center mb-1">
+                            <h3 class="font-bold text-lg text-slate-800 flex items-center gap-2">
+                                <i class="fa-solid fa-arrow-right-to-bracket text-tayo-blue"></i> Gate IN (Masuk)
+                            </h3>
+                            <span id="gate-in-badge" class="px-3 py-1 rounded-full text-xs font-extrabold bg-red-100 text-tayo-red border border-red-200">
+                                TUTUP
+                            </span>
+                        </div>
+                        <p class="text-xs font-mono text-slate-400 mb-3">Servo SG90 → ESP32 GPIO 18</p>
+                        
+                        <!-- Barrier Gate Visual Animation -->
+                        <div class="bg-slate-100 rounded-xl p-4 mb-4 flex items-end justify-between h-20 relative overflow-hidden border border-slate-200">
+                            <!-- Gate Base Column -->
+                            <div class="w-6 h-12 bg-tayo-yellow rounded-t-md border-2 border-slate-700 flex flex-col justify-around items-center z-10">
+                                <div class="w-3 h-3 bg-red-500 rounded-full"></div>
+                                <div class="w-3 h-3 bg-green-500 rounded-full"></div>
+                            </div>
+                            <!-- Rotating Gate Arm Pole -->
+                            <div id="gate-in-arm" class="gate-arm absolute left-8 bottom-3 w-4/5 h-3 bg-tayo-red border-2 border-slate-800 rounded-r-full flex items-center justify-around px-2">
+                                <div class="w-4 h-full bg-white"></div>
+                                <div class="w-4 h-full bg-white"></div>
+                                <div class="w-4 h-full bg-white"></div>
+                            </div>
+                            <!-- Small Decor Bus -->
+                            <div class="text-2xl z-0 text-slate-400">🚌</div>
+                        </div>
+
+                        <!-- Gate Control Buttons -->
+                        <div class="grid grid-cols-2 gap-2">
+                            <button onclick="toggleGate('in', true)" class="bg-tayo-green hover:bg-green-600 active:scale-95 text-white font-bold py-2.5 px-3 rounded-xl shadow transition text-sm flex items-center justify-center gap-1.5">
+                                <i class="fa-solid fa-lock-open"></i> Buka
+                            </button>
+                            <button onclick="toggleGate('in', false)" class="bg-tayo-red hover:bg-red-600 active:scale-95 text-white font-bold py-2.5 px-3 rounded-xl shadow transition text-sm flex items-center justify-center gap-1.5">
+                                <i class="fa-solid fa-lock"></i> Tutup
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Gate OUT Card -->
+                    <div class="tayo-card p-5 border-t-4 border-t-tayo-yellow">
+                        <div class="flex justify-between items-center mb-1">
+                            <h3 class="font-bold text-lg text-slate-800 flex items-center gap-2">
+                                <i class="fa-solid fa-arrow-right-from-bracket text-tayo-yellow"></i> Gate OUT (Keluar)
+                            </h3>
+                            <span id="gate-out-badge" class="px-3 py-1 rounded-full text-xs font-extrabold bg-red-100 text-tayo-red border border-red-200">
+                                TUTUP
+                            </span>
+                        </div>
+                        <p class="text-xs font-mono text-slate-400 mb-3">Servo SG90 → ESP32 GPIO 19</p>
+
+                        <!-- Barrier Gate Visual Animation -->
+                        <div class="bg-slate-100 rounded-xl p-4 mb-4 flex items-end justify-between h-20 relative overflow-hidden border border-slate-200">
+                            <!-- Gate Base Column -->
+                            <div class="w-6 h-12 bg-tayo-blue rounded-t-md border-2 border-slate-700 flex flex-col justify-around items-center z-10">
+                                <div class="w-3 h-3 bg-red-500 rounded-full"></div>
+                                <div class="w-3 h-3 bg-green-500 rounded-full"></div>
+                            </div>
+                            <!-- Rotating Gate Arm Pole -->
+                            <div id="gate-out-arm" class="gate-arm absolute left-8 bottom-3 w-4/5 h-3 bg-tayo-yellow border-2 border-slate-800 rounded-r-full flex items-center justify-around px-2">
+                                <div class="w-4 h-full bg-slate-800"></div>
+                                <div class="w-4 h-full bg-slate-800"></div>
+                                <div class="w-4 h-full bg-slate-800"></div>
+                            </div>
+                            <!-- Small Decor Bus -->
+                            <div class="text-2xl z-0 text-slate-400">🚕</div>
+                        </div>
+
+                        <!-- Gate Control Buttons -->
+                        <div class="grid grid-cols-2 gap-2">
+                            <button onclick="toggleGate('out', true)" class="bg-tayo-green hover:bg-green-600 active:scale-95 text-white font-bold py-2.5 px-3 rounded-xl shadow transition text-sm flex items-center justify-center gap-1.5">
+                                <i class="fa-solid fa-lock-open"></i> Buka
+                            </button>
+                            <button onclick="toggleGate('out', false)" class="bg-tayo-red hover:bg-red-600 active:scale-95 text-white font-bold py-2.5 px-3 rounded-xl shadow transition text-sm flex items-center justify-center gap-1.5">
+                                <i class="fa-solid fa-lock"></i> Tutup
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- SECTION 3: LOG AKTIVITAS (RIWAYAT REAL-TIME) -->
+        <section class="tayo-card p-6">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4 pb-3 border-b border-slate-100">
+                <div>
+                    <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2">
+                        <i class="fa-solid fa-clock-rotate-left text-tayo-blue"></i> Riwayat & Log Aktivitas
+                    </h2>
+                    <p class="text-xs text-slate-400 font-semibold">Pencatatan real-time perubahan status area parkir</p>
+                </div>
+                <button onclick="clearLogs()" class="text-xs font-bold text-slate-500 hover:text-tayo-red bg-slate-100 hover:bg-red-50 px-3.5 py-2 rounded-xl border border-slate-200 transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-trash-can"></i> Bersihkan Log
+                </button>
+            </div>
+
+            <!-- Log Table / Container -->
+            <div class="overflow-x-auto max-h-64 overflow-y-auto pr-1">
+                <table class="w-full text-left text-sm">
+                    <thead class="bg-slate-50 text-slate-500 font-bold sticky top-0 border-b border-slate-200">
+                        <tr>
+                            <th class="py-2.5 px-3 rounded-l-lg">Waktu</th>
+                            <th class="py-2.5 px-3">Nama Aktivitas</th>
+                            <th class="py-2.5 px-3 rounded-r-lg text-right">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="log-list" class="divide-y divide-slate-100 font-medium">
+                        <!-- Dynamic log items will be inserted here -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="mt-12 text-center text-xs text-slate-400 font-bold">
+        <p>Smart Parking System Tayo Theme • Mode Simulasi Frontend Murni</p>
+    </footer>
+
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        /**
+         * STATE MANAGEMENT (2 Slot + Hardware ESP32 Mapping)
+         */
+        const parkingSlots = [
+            { id: 'A1', pin: 'GPIO 32', sensorName: 'IR Sensor 1', isOccupied: false, vehicleType: '🚌 Tayo (Bus Biru)' },
+            { id: 'A2', pin: 'GPIO 33', sensorName: 'IR Sensor 2', isOccupied: true,  vehicleType: '🚘 Gani (Bus Merah)' }
+        ];
+
+        const gates = {
+            in:  { isOpen: false, name: 'Gate IN (Masuk)',  pin: 'GPIO 18 (Servo IN)' },
+            out: { isOpen: false, name: 'Gate OUT (Keluar)', pin: 'GPIO 19 (Servo OUT)' }
+        };
+
+        const logs = [];
+
+        /**
+         * INITIALIZATION
+         */
+        window.addEventListener('DOMContentLoaded', () => {
+            renderParkingGrid();
+            updateStatistics();
+            addLog('ESP32 Microcontroller', 'Terhubung ke IP 192.168.1.50 (2x IR Sensor, 2x Servo)', 'blue', 'CONNECTED');
+        });
+
+        /**
+         * RENDER VISUAL SLOT PARKIR (Hanya 2 Slot: A1 & A2)
+         */
+        function renderParkingGrid() {
+            const gridContainer = document.getElementById('parking-grid');
+            gridContainer.innerHTML = '';
+
+            parkingSlots.forEach(slot => {
+                const card = document.createElement('div');
+                card.className = `slot-card tayo-card p-5 flex flex-col items-center justify-between min-h-[190px] text-center relative overflow-hidden ${
+                    slot.isOccupied ? 'bg-red-50/50 border-tayo-red/40' : 'bg-green-50/50 border-tayo-green/40'
+                }`;
+                card.onclick = () => toggleSlotStatus(slot.id);
+
+                // Slot Badge Header
+                const statusBadge = slot.isOccupied 
+                    ? `<span class="bg-tayo-red text-white text-[10px] font-extrabold px-2.5 py-0.5 rounded-full uppercase tracking-wider shadow-sm">Terisi (Halangan Detected)</span>`
+                    : `<span class="bg-tayo-green text-white text-[10px] font-extrabold px-2.5 py-0.5 rounded-full uppercase tracking-wider shadow-sm">Tersedia (IR Clear)</span>`;
+
+                // Vehicle Visual Icon
+                const iconVisual = slot.isOccupied
+                    ? `<div class="text-5xl my-3 transform hover:scale-110 transition drop-shadow-md">🚌</div>`
+                    : `<div class="text-4xl my-3 text-slate-300 opacity-60">🅿️</div>`;
+
+                card.innerHTML = `
+                    <div class="w-full flex justify-between items-center border-b border-slate-200/60 pb-2">
+                        <div>
+                            <span class="font-title text-2xl font-bold text-slate-700">Slot ${slot.id}</span>
+                            <span class="block text-[10px] font-mono text-slate-400">${slot.sensorName} [${slot.pin}]</span>
+                        </div>
+                        ${statusBadge}
+                    </div>
+                    ${iconVisual}
+                    <div class="text-xs font-semibold text-slate-500">
+                        ${slot.isOccupied ? slot.vehicleType : 'Kosong (Area Bebas)'}
+                    </div>
+                `;
+
+                gridContainer.appendChild(card);
+            });
+        }
+
+        /**
+         * SIMULASI SENSOR INFRARED (IR)
+         */
+        function toggleIRSensor(slotId) {
+            toggleSlotStatus(slotId, true);
+        }
+
+        /**
+         * TOGGLE SLOT STATUS (Via Sensor IR / Klik UI)
+         */
+        function toggleSlotStatus(slotId, isHardwareTrigger = false) {
+            const slot = parkingSlots.find(s => s.id === slotId);
+            if (!slot) return;
+
+            slot.isOccupied = !slot.isOccupied;
+
+            renderParkingGrid();
+            updateStatistics();
+
+            const triggerSource = isHardwareTrigger ? `Trigger IR (${slot.pin})` : `Manual UI`;
+            const actionText = slot.isOccupied ? `Terdeteksi Mobil pada Slot ${slot.id}` : `Slot ${slot.id} Bebas`;
+            const badgeType = slot.isOccupied ? 'red' : 'green';
+            const statusLabel = slot.isOccupied ? 'IR OBSTACLE' : 'IR CLEAR';
+
+            addLog(`${slot.sensorName} (${slot.pin})`, `${actionText} [${triggerSource}]`, badgeType, statusLabel);
+
+            /* 
+             * INTEGRASI REAL HARDWARE ESP32:
+             * Jika dihubungkan ke hardware fisik asli, panggil HTTP Request / WebSocket berikut:
+             * fetch(`http://192.168.1.50/api/slot?id=${slot.id}&status=${slot.isOccupied ? 1 : 0}`);
+             */
+        }
+
+        /**
+         * UPDATE STATISTIK (Dinamis untuk 2 Slot)
+         */
+        function updateStatistics() {
+            const total = parkingSlots.length; // 2 Slot
+            const occupied = parkingSlots.filter(s => s.isOccupied).length;
+            const available = total - occupied;
+
+            document.getElementById('stat-total').innerText = total;
+            document.getElementById('stat-available').innerText = available;
+            document.getElementById('stat-occupied').innerText = occupied;
+        }
+
+        /**
+         * TOGGLE KONTROL GERBANG SERVO ESP32
+         */
+        function toggleGate(gateType, shouldOpen) {
+            const gate = gates[gateType];
+            if (!gate) return;
+
+            if (gate.isOpen === shouldOpen) return;
+
+            gate.isOpen = shouldOpen;
+
+            const badge = document.getElementById(`gate-${gateType}-badge`);
+            const arm = document.getElementById(`gate-${gateType}-arm`);
+
+            if (gate.isOpen) {
+                badge.className = "px-3 py-1 rounded-full text-xs font-extrabold bg-green-100 text-tayo-green border border-green-200";
+                badge.innerText = "TERBUKA";
+                arm.classList.add('open');
+
+                addLog(`ESP32 (${gate.pin})`, `Servo Buka Perintah Terkirim`, 'green', 'SERVO OPEN');
+            } else {
+                badge.className = "px-3 py-1 rounded-full text-xs font-extrabold bg-red-100 text-tayo-red border border-red-200";
+                badge.innerText = "TUTUP";
+                arm.classList.remove('open');
+
+                addLog(`ESP32 (${gate.pin})`, `Servo Tutup Perintah Terkirim`, 'red', 'SERVO CLOSE');
+            }
+
+            /* 
+             * INTEGRASI REAL HARDWARE ESP32:
+             * fetch(`http://192.168.1.50/api/servo?gate=${gateType}&state=${shouldOpen ? 'OPEN' : 'CLOSE'}`);
+             */
+        }
+
+        /**
+         * LOG MANAGEMENT
+         */
+        function addLog(activityName, description, colorType = 'blue', customStatus = null) {
+            const now = new Date();
+            const timeString = now.toTimeString().split(' ')[0];
+
+            const logEntry = {
+                time: timeString,
+                activity: activityName,
+                desc: description,
+                color: colorType,
+                status: customStatus || description
+            };
+
+            logs.unshift(logEntry);
+            renderLogs();
+        }
+
+        function renderLogs() {
+            const logContainer = document.getElementById('log-list');
+            logContainer.innerHTML = '';
+
+            if (logs.length === 0) {
+                logContainer.innerHTML = `
+                    <tr>
+                        <td colspan="3" class="py-4 text-center text-slate-400 font-semibold italic">
+                            Belum ada riwayat aktivitas hardware.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            logs.forEach(log => {
+                let badgeStyle = 'bg-blue-100 text-tayo-blue';
+                if (log.color === 'green') badgeStyle = 'bg-green-100 text-tayo-green';
+                if (log.color === 'red') badgeStyle = 'bg-red-100 text-tayo-red';
+
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50/80 transition-colors";
+                tr.innerHTML = `
+                    <td class="py-3 px-3 text-slate-400 text-xs font-mono font-bold">${log.time}</td>
+                    <td class="py-3 px-3">
+                        <span class="font-bold text-slate-700">${log.activity}</span>
+                        <span class="text-xs text-slate-400 block sm:inline sm:ml-2">${log.desc}</span>
+                    </td>
+                    <td class="py-3 px-3 text-right">
+                        <span class="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wide ${badgeStyle}">
+                            ${log.status}
+                        </span>
+                    </td>
+                `;
+                logContainer.appendChild(tr);
+            });
+        }
+
+        function clearLogs() {
+            logs.length = 0;
+            renderLogs();
+        }
+    </script>
+</body>
+</html>
