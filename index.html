@@ -174,4 +174,419 @@
 
     .card-header h2 {
       font-family: 'Fredoka', cursive;
-      font-size: 1.2
+      font-size: 1.2rem;
+      color: var(--tayo-blue-dark);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* SLOT PARKIR VISUAL */
+    .slots-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .parking-slot {
+      background: #F8F9FA;
+      border: 3px solid #CFD8DC;
+      border-radius: 16px;
+      padding: 14px;
+      text-align: center;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
+      min-height: 170px;
+    }
+
+    .parking-slot.available { border-color: var(--rogi-green); background-color: rgba(76, 175, 80, 0.08); }
+    .parking-slot.occupied { border-color: var(--gani-red); background-color: rgba(229, 57, 53, 0.08); }
+
+    .slot-id {
+      font-family: 'Fredoka', cursive;
+      font-size: 1.1rem;
+      background: white;
+      padding: 2px 10px;
+      border-radius: 10px;
+    }
+
+    .bus-icon-container {
+      height: 50px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .tayo-bus-icon {
+      font-size: 2.8rem;
+      color: var(--gani-red);
+      display: none;
+    }
+
+    .parking-slot.occupied .tayo-bus-icon { display: block; }
+    .parking-slot.available .empty-indicator { font-size: 2.2rem; color: #B0BEC5; }
+    .parking-slot.occupied .empty-indicator { display: none; }
+
+    .slot-status-badge {
+      font-size: 0.75rem;
+      font-weight: 800;
+      padding: 4px 10px;
+      border-radius: 50px;
+      color: white;
+    }
+
+    .parking-slot.available .slot-status-badge { background-color: var(--rogi-green); }
+    .parking-slot.occupied .slot-status-badge { background-color: var(--gani-red); }
+
+    /* GERBANG SERVO */
+    .gate-controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .gate-card {
+      background: #F8F9FA;
+      border-radius: 14px;
+      padding: 12px;
+      border: 1px solid #ECEFF1;
+      text-align: center;
+    }
+
+    .gate-title {
+      font-family: 'Fredoka', cursive;
+      font-size: 0.95rem;
+      margin-bottom: 8px;
+    }
+
+    .gate-visual {
+      height: 65px;
+      background: #E0E0E0;
+      border-radius: 10px;
+      position: relative;
+      margin-bottom: 10px;
+    }
+
+    .gate-post {
+      width: 12px;
+      height: 38px;
+      background: #424242;
+      border-radius: 3px;
+      position: absolute;
+      bottom: 8px;
+      left: 14px;
+      z-index: 2;
+    }
+
+    .gate-arm {
+      height: 8px;
+      width: 75%;
+      background: repeating-linear-gradient(45deg, var(--gani-red), var(--gani-red) 8px, #FFF 8px, #FFF 16px);
+      position: absolute;
+      bottom: 32px;
+      left: 20px;
+      transform-origin: left center;
+      transition: transform 0.4s ease;
+      border-radius: 4px;
+    }
+
+    .gate-card.open .gate-arm { transform: rotate(-75deg); }
+
+    .btn-group { display: flex; gap: 6px; }
+    .btn {
+      flex: 1;
+      padding: 8px;
+      border: none;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 0.8rem;
+      cursor: pointer;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+    }
+
+    .btn-open { background-color: var(--rogi-green); }
+    .btn-close { background-color: var(--gani-red); }
+
+    /* AI CAMERA LAYOUT FIX */
+    .camera-preview-container {
+      width: 100%;
+      height: 180px;
+      background: #1A237E;
+      border-radius: 12px;
+      overflow: hidden;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      margin-bottom: 12px;
+    }
+
+    #webcam-container video, #webcam-container canvas {
+      width: 100%;
+      height: 180px;
+      object-fit: cover;
+    }
+
+    .camera-placeholder { text-align: center; }
+    .camera-placeholder i { font-size: 2.2rem; color: var(--lani-yellow); margin-bottom: 6px; }
+
+    /* LOG TABEL */
+    .log-card { grid-column: 1 / -1; }
+    .log-table-container { max-height: 220px; overflow-y: auto; }
+    .log-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    .log-table th { background: var(--tayo-blue); color: white; padding: 10px; position: sticky; top: 0; }
+    .log-table td { padding: 10px; border-bottom: 1px solid #ECEFF1; }
+
+    @media (max-width: 768px) {
+      .stats-container { grid-template-columns: 1fr; }
+      .dashboard-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <header>
+      <div class="header-title">
+        <i class="fa-solid fa-bus-simple"></i>
+        <div>
+          <h1>Smart Parking Tayo</h1>
+          <p>Sistem Monitoring Parkir Pintar Real-Time</p>
+        </div>
+      </div>
+      <div class="status-badges">
+        <div class="badge">
+          <div class="pulse-dot" id="firebase-dot"></div>
+          <span id="firebase-status">OFFLINE SIMULATION</span>
+        </div>
+      </div>
+    </header>
+
+    <div class="stats-container">
+      <div class="stat-card">
+        <div class="stat-number" id="stat-total">2</div>
+        <div class="stat-label">TOTAL SLOT</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number" id="stat-available" style="color: var(--rogi-green)">2</div>
+        <div class="stat-label">TERSEDIA</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number" id="stat-occupied" style="color: var(--gani-red)">0</div>
+        <div class="stat-label">TERISI</div>
+      </div>
+    </div>
+
+    <div class="dashboard-grid">
+
+      <!-- SLOT PARKIR -->
+      <div class="card">
+        <div class="card-header">
+          <h2><i class="fa-solid fa-square-parking"></i> Slot Parkir (IR Sensor)</h2>
+          <span style="font-size: 0.75rem; color: var(--text-muted)">Pin 32 & 33</span>
+        </div>
+        <div class="slots-grid">
+          <div class="parking-slot available" id="slot-A1" onclick="toggleSlot('A1')">
+            <div class="slot-id">SLOT A1</div>
+            <div class="bus-icon-container">
+              <i class="fa-solid fa-bus tayo-bus-icon"></i>
+              <i class="fa-solid fa-square-parking empty-indicator"></i>
+            </div>
+            <div class="slot-status-badge" id="badge-A1">TERSEDIA</div>
+          </div>
+          <div class="parking-slot available" id="slot-A2" onclick="toggleSlot('A2')">
+            <div class="slot-id">SLOT A2</div>
+            <div class="bus-icon-container">
+              <i class="fa-solid fa-bus tayo-bus-icon"></i>
+              <i class="fa-solid fa-square-parking empty-indicator"></i>
+            </div>
+            <div class="slot-status-badge" id="badge-A2">TERSEDIA</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- KONTROL GERBANG SERVO -->
+      <div class="card">
+        <div class="card-header">
+          <h2><i class="fa-solid fa-torii-gate"></i> Kontrol Gerbang (Servo)</h2>
+          <span style="font-size: 0.75rem; color: var(--text-muted)">GPIO 18 & 19</span>
+        </div>
+        <div class="gate-controls">
+          <div class="gate-card" id="gate-IN-card">
+            <div class="gate-title">Gate IN (Masuk)</div>
+            <div class="gate-visual">
+              <div class="gate-post"></div>
+              <div class="gate-arm"></div>
+            </div>
+            <div class="btn-group">
+              <button class="btn btn-open" onclick="setGateStatus('IN', 'OPEN')"><i class="fa-solid fa-door-open"></i> Buka</button>
+              <button class="btn btn-close" onclick="setGateStatus('IN', 'CLOSED')"><i class="fa-solid fa-door-closed"></i> Tutup</button>
+            </div>
+          </div>
+
+          <div class="gate-card" id="gate-OUT-card">
+            <div class="gate-title">Gate OUT (Keluar)</div>
+            <div class="gate-visual">
+              <div class="gate-post"></div>
+              <div class="gate-arm"></div>
+            </div>
+            <div class="btn-group">
+              <button class="btn btn-open" onclick="setGateStatus('OUT', 'OPEN')"><i class="fa-solid fa-door-open"></i> Buka</button>
+              <button class="btn btn-close" onclick="setGateStatus('OUT', 'CLOSED')"><i class="fa-solid fa-door-closed"></i> Tutup</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AI CAMERA DETECTION -->
+      <div class="card">
+        <div class="card-header">
+          <h2><i class="fa-solid fa-robot"></i> AI Camera Detection</h2>
+          <span style="font-size: 0.75rem; color: var(--text-muted)" id="ai-status">Ready</span>
+        </div>
+        <div class="camera-preview-container">
+          <div id="webcam-container"></div>
+          <div class="camera-placeholder" id="camera-placeholder">
+            <i class="fa-solid fa-camera-retro"></i>
+            <p style="font-size: 0.85rem;">Kamera Belum Aktif</p>
+          </div>
+        </div>
+        <div style="display: flex; gap: 8px;">
+          <button class="btn btn-open" style="background: var(--tayo-blue)" onclick="initCamera()"><i class="fa-solid fa-play"></i> Start Camera</button>
+          <button class="btn btn-close" onclick="stopCamera()"><i class="fa-solid fa-stop"></i> Stop</button>
+        </div>
+      </div>
+
+      <!-- LOG TERPADU -->
+      <div class="card log-card">
+        <div class="card-header">
+          <h2><i class="fa-solid fa-list-check"></i> Riwayat Aktivitas Real-Time</h2>
+        </div>
+        <div class="log-table-container">
+          <table class="log-table">
+            <thead>
+              <tr>
+                <th>Waktu</th>
+                <th>Perangkat</th>
+                <th>Aktivitas</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="log-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // FIREBASE SETUP
+    const firebaseConfig = {
+      apiKey: "AIzaSyBE94__ZTS33j372nSkbh8bpdFeDv9JZU0",
+      authDomain: "smartparking-e4101.firebaseapp.com",
+      databaseURL: "https://smartparking-e4101-default-rtdb.firebaseio.com",
+    };
+
+    let db = null;
+    let isFirebaseConnected = false;
+
+    try {
+      firebase.initializeApp(firebaseConfig);
+      db = firebase.database();
+      
+      db.ref('.info/connected').on('value', (snap) => {
+        if (snap.val() === true) {
+          isFirebaseConnected = true;
+          document.getElementById('firebase-dot').classList.remove('offline');
+          document.getElementById('firebase-status').innerText = 'ONLINE FIREBASE';
+          addLog('SYSTEM', 'Terhubung ke Firebase Realtime Database', 'Success');
+        } else {
+          isFirebaseConnected = false;
+          document.getElementById('firebase-dot').classList.add('offline');
+          document.getElementById('firebase-status').innerText = 'OFFLINE SIMULATION';
+        }
+      });
+
+      // LISTENER REALTIME FIREBASE
+      db.ref('parking/slotA1').on('value', (snap) => updateSlotUI('A1', snap.val(), 'ESP32 IR Sensor 1'));
+      db.ref('parking/slotA2').on('value', (snap) => updateSlotUI('A2', snap.val(), 'ESP32 IR Sensor 2'));
+      db.ref('gates/gateIN').on('value', (snap) => updateGateUI('IN', snap.val(), 'ESP32 Servo IN'));
+      db.ref('gates/gateOUT').on('value', (snap) => updateGateUI('OUT', snap.val(), 'ESP32 Servo OUT'));
+
+    } catch (e) {
+      console.warn("Offline fallback", e);
+    }
+
+    const parkingData = { A1: false, A2: false };
+    const gateData = { IN: 'CLOSED', OUT: 'CLOSED' };
+
+    function toggleSlot(slotId) {
+      const newStatus = !parkingData[slotId];
+      if (isFirebaseConnected && db) db.ref(`parking/slot${slotId}`).set(newStatus);
+      else updateSlotUI(slotId, newStatus, 'Manual Click');
+    }
+
+    function setGateStatus(gateId, status) {
+      if (isFirebaseConnected && db) db.ref(`gates/gate${gateId}`).set(status);
+      else updateGateUI(gateId, status, 'Manual Click');
+    }
+
+    function updateSlotUI(slotId, isOccupied, src) {
+      if (parkingData[slotId] === isOccupied) return;
+      parkingData[slotId] = isOccupied;
+      const slotEl = document.getElementById(`slot-${slotId}`);
+      const badgeEl = document.getElementById(`badge-${slotId}`);
+
+      if (isOccupied) {
+        slotEl.classList.remove('available'); slotEl.classList.add('occupied');
+        badgeEl.innerText = 'TERISI';
+        addLog(src, `Slot ${slotId} Terdeteksi Terisi`, 'TERISI');
+      } else {
+        slotEl.classList.remove('occupied'); slotEl.classList.add('available');
+        badgeEl.innerText = 'TERSEDIA';
+        addLog(src, `Slot ${slotId} Kosong`, 'TERSEDIA');
+      }
+      calcStats();
+    }
+
+    function updateGateUI(gateId, status, src) {
+      if (gateData[gateId] === status) return;
+      gateData[gateId] = status;
+      const gateCard = document.getElementById(`gate-${gateId}-card`);
+
+      if (status === 'OPEN') {
+        gateCard.classList.add('open');
+        addLog(src, `Gerbang ${gateId} Diberi Perintah Buka`, 'OPEN');
+      } else {
+        gateCard.classList.remove('open');
+        addLog(src, `Gerbang ${gateId} Diberi Perintah Tutup`, 'CLOSED');
+      }
+    }
+
+    function calcStats() {
+      let occ = 0;
+      if (parkingData.A1) occ++;
+      if (parkingData.A2) occ++;
+      document.getElementById('stat-available').innerText = 2 - occ;
+      document.getElementById('stat-occupied').innerText = occ;
+    }
+
+    function addLog(dev, act, st) {
+      const tbody = document.getElementById('log-tbody');
+      const timeStr = new Date().toTimeString().split(' ')[0];
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${timeStr}</td><td><b>${dev}</b></td><td>${act}</td><td><b>${st}</b></td>`;
+      tbody.insertBefore(tr, tbody.firstChild);
+    }
+  </script>
+</body>
+</html>
